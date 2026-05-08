@@ -496,6 +496,160 @@ function buildHTML(d){
     +'</div>';
 }
 
+// ── EMAIL HTML (inline styles for Gmail) ─────────────────────────────────────
+function buildEmailHTML(d){
+  var iss   = d.issue || {};
+  var lede  = d.lede  || {};
+  var deals = d.deals || [];
+  var banks = d.banking || [];
+  var intel = d.intelligence || [];
+  var radar = d.radar || [];
+  var nw    = d.nextWave || [];
+  var mem   = d.memoryItems || [];
+
+  var W = "max-width:680px;margin:0 auto;font-family:Arial,sans-serif;background:#f5f2eb;color:#0a0a0f;";
+  var MONO = "font-family:'Courier New',monospace;";
+  var SEC = "font-size:9px;"+MONO+"letter-spacing:.18em;text-transform:uppercase;color:#9b9087;border-top:1px solid #d4cfc6;padding-top:6px;margin:20px 0 12px;";
+
+  // Stats
+  var statTDs = (lede.stats||[]).map(function(s){
+    return '<td style="padding:12px 14px;border-right:1px solid #d4cfc6;vertical-align:top;width:25%;">'
+      +'<div style="font-size:22px;font-weight:700;margin-bottom:2px;">'+esc(s.num)+'</div>'
+      +'<div style="font-size:11px;color:#9b9087;line-height:1.4;margin-bottom:3px;">'+esc(s.label)+'</div>'
+      +'<div style="'+MONO+'font-size:9px;color:#9b9087;">'+src(s.source,s.sourceUrl)+'</div>'
+      +'</td>';
+  }).join("");
+
+  // Deals
+  var dealsHTML = deals.map(function(dl){
+    var badgeColor = dl.type==='ma' ? '#534AB7' : '#2a6e4e';
+    return '<div style="border-bottom:1px solid #d4cfc6;padding:14px 0;">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'
+      +'<span style="font-size:18px;font-weight:700;">'+esc(dl.company)+'</span>'
+      +'<span style="'+MONO+'font-size:8px;letter-spacing:.1em;text-transform:uppercase;border:1px solid '+badgeColor+';color:'+badgeColor+';padding:2px 7px;">'+esc((dl.type||'').toUpperCase())+'</span>'
+      +'</div>'
+      +'<div style="'+MONO+'font-size:10px;color:#9b9087;margin-bottom:6px;">'+esc(dl.amount)+'</div>'
+      +'<div style="font-size:12px;line-height:1.6;color:#222;margin-bottom:6px;">'+esc(dl.description)+'</div>'
+      +(dl.meta ? '<div style="font-size:11px;line-height:1.6;background:#fff3b0;padding:7px 10px;border-left:2px solid #e8c64a;margin-bottom:6px;">'+esc(dl.meta)+'</div>' : '')
+      +'<div style="'+MONO+'font-size:9px;color:#9b9087;">'+src(dl.source,dl.sourceUrl)+'</div>'
+      +'</div>';
+  }).join("");
+
+  // Banking — table layout for email
+  var bankCells = banks.map(function(b){
+    return '<td style="padding:14px 16px;border-right:1px solid #d4cfc6;vertical-align:top;width:50%;">'
+      +'<div style="font-size:16px;font-weight:700;margin-bottom:2px;">'+esc(b.bank)+'</div>'
+      +'<div style="'+MONO+'font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:#c8302a;margin-bottom:8px;">'+esc(b.role)+'</div>'
+      +'<div style="font-size:12px;line-height:1.6;color:#222;margin-bottom:6px;">'+esc(b.deals)+'</div>'
+      +(b.note ? '<div style="font-size:11px;line-height:1.6;border-left:2px solid #0a0a0f;padding-left:8px;color:#9b9087;margin-bottom:6px;">'+esc(b.note)+'</div>' : '')
+      +'<div style="'+MONO+'font-size:9px;color:#9b9087;">'+src(b.source,b.sourceUrl)+'</div>'
+      +'</td>';
+  }).join("");
+
+  // Intelligence
+  var intelHTML = intel.map(function(item){
+    return '<div style="border-bottom:1px solid #d4cfc6;padding:14px 0;">'
+      +'<div style="font-size:16px;font-weight:700;line-height:1.1;margin-bottom:7px;">'+esc(item.title)+'</div>'
+      +'<div style="font-size:12px;line-height:1.7;color:#222;margin-bottom:6px;">'+esc(item.body)+'</div>'
+      +'<div style="'+MONO+'font-size:9px;color:#9b9087;">'+src(item.source,item.sourceUrl)+'</div>'
+      +'</div>';
+  }).join("");
+
+  // Radar
+  var radarRows = radar.map(function(r){
+    var mc = r.momentum==='up' ? '#2a6e4e' : r.momentum==='new' ? '#185FA5' : '#7a6e00';
+    var ml = r.momentum==='up' ? '&#8593; Up' : r.momentum==='new' ? '&#9733; New' : '&#9689; Watch';
+    return '<tr style="border-bottom:1px solid #d4cfc6;">'
+      +'<td style="padding:10px 12px;vertical-align:top;width:160px;">'
+      +'<div style="font-size:14px;font-weight:700;">'+esc(r.company)+'</div>'
+      +'<div style="'+MONO+'font-size:9px;color:#9b9087;">'+esc(r.founded)+'</div>'
+      +'</td>'
+      +'<td style="padding:10px 12px;vertical-align:top;font-size:12px;color:#222;line-height:1.5;">'+esc(r.positioning)+'</td>'
+      +'<td style="padding:10px 12px;vertical-align:top;text-align:right;'+MONO+'font-size:9px;color:#9b9087;">'
+      +esc(r.stage)+'<br><span style="color:'+mc+';">'+ml+'</span></td>'
+      +'</tr>';
+  }).join("");
+
+  // Next Wave
+  var nwCells = nw.map(function(n){
+    var sigs = (n.signals||[]).map(function(s){
+      return '<div style="'+MONO+'font-size:9px;color:#9b9087;border-top:1px solid #d4cfc6;padding:3px 0;">'+esc(s)+'</div>';
+    }).join("");
+    return '<td style="padding:14px 12px;border-right:1px solid #d4cfc6;vertical-align:top;width:33%;">'
+      +'<div style="font-size:14px;font-weight:700;margin-bottom:3px;line-height:1.2;">'+esc(n.category)+'</div>'
+      +'<div style="'+MONO+'font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#9b9087;margin-bottom:8px;">'+esc(n.stage)+'</div>'
+      +'<div style="font-size:11px;line-height:1.6;color:#222;margin-bottom:6px;">'+esc(n.pitch)+'</div>'
+      +sigs
+      +'</td>';
+  }).join("");
+
+  // Memory chips
+  var memHTML = mem.map(function(m){
+    return '<span style="'+MONO+'font-size:9px;background:#f5f2eb;border:1px solid #d4cfc6;padding:2px 8px;margin:2px;display:inline-block;">'+esc(m.company)+'</span>';
+  }).join(" ");
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f5f2eb;">'
+    +'<div style="'+W+'">'
+
+    // MASTHEAD
+    +'<div style="background:#0a0a0f;padding:20px 24px;">'
+    +'<div style="'+MONO+'font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c8302a;margin-bottom:6px;">Weekly Intelligence Brief</div>'
+    +'<div style="font-size:48px;font-weight:900;color:#f5f2eb;line-height:.85;letter-spacing:-2px;">THE<br>SIGNAL<br>FEED</div>'
+    +'<div style="'+MONO+'font-size:9px;color:#9b9087;margin-top:8px;line-height:1.8;">'+esc(iss.vol||'')+'&nbsp;&nbsp;'+esc(iss.num||'')+'&nbsp;&nbsp;'+esc(iss.week||'')+'</div>'
+    +'<div style="'+MONO+'font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#9b9087;margin-top:4px;">MDR &amp; AI SOC &mdash; Powered by Kita</div>'
+    +'</div>'
+
+    // LEDE
+    +'<div style="padding:0 24px;">'
+    +'<div style="'+SEC+'margin-top:20px;">This Week\'s Thesis</div>'
+    +'<div style="border:1.5px solid #0a0a0f;">'
+    +'<div style="padding:18px 20px;border-bottom:1.5px solid #0a0a0f;">'
+    +'<div style="'+MONO+'font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#c8302a;margin-bottom:6px;">'+esc(lede.kicker||'')+'</div>'
+    +'<div style="font-size:26px;font-weight:900;line-height:1;margin-bottom:10px;letter-spacing:-.5px;">'+esc(lede.headline||'')+'</div>'
+    +'<div style="font-size:13px;line-height:1.7;color:#222;">'+esc(lede.body||'')+'</div>'
+    +'</div>'
+    +(statTDs ? '<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr>'+statTDs+'</tr></table>' : '')
+    +'</div>'
+
+    // DEALS
+    +(dealsHTML ? '<div style="'+SEC+'">Deal Flow</div>'+dealsHTML : '')
+
+    // BANKING
+    +(bankCells ? '<div style="'+SEC+'">Banking Intelligence</div>'
+      +'<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1.5px solid #0a0a0f;"><tr>'+bankCells+'</tr></table>' : '')
+
+    // INTELLIGENCE
+    +(intelHTML ? '<div style="'+SEC+'">Signal Intelligence</div>'+intelHTML : '')
+
+    // THE TAKE
+    +(d.take ? '<div style="'+SEC+'">The Take</div>'
+      +'<div style="background:#0a0a0f;padding:20px;margin-bottom:4px;">'
+      +'<div style="'+MONO+'font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#9b9087;margin-bottom:8px;">Kita\'s Read</div>'
+      +'<div style="font-size:13px;line-height:1.7;color:#f5f2eb;">'+esc(d.take)+'</div>'
+      +'</div>' : '')
+
+    // RADAR
+    +(radarRows ? '<div style="'+SEC+'">Company Radar</div>'
+      +'<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">'+radarRows+'</table>' : '')
+
+    // NEXT WAVE
+    +(nwCells ? '<div style="'+SEC+'">Next Wave</div>'
+      +'<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border:1.5px solid #0a0a0f;"><tr>'+nwCells+'</tr></table>' : '')
+
+    // MEMORY
+    +(memHTML ? '<div style="'+SEC+'">Memory Ledger</div><div style="margin-bottom:8px;">'+memHTML+'</div>' : '')
+
+    // FOOTER
+    +'<div style="border-top:2px solid #0a0a0f;margin-top:20px;padding:12px 0;display:flex;justify-content:space-between;'+MONO+'font-size:9px;color:#9b9087;">'
+    +'<span>Forwarded this? Subscribe at kitaknows.com</span>'
+    +'<span>THE SIGNAL FEED</span>'
+    +'</div>'
+
+    +'</div>'
+    +'</div>'
+    +'</body></html>';
+}
+
 // ── EMAIL ────────────────────────────────────────────────────────────────────
 function sendEmail(){
   if (!currentData || recipients.length === 0) return;
@@ -507,14 +661,14 @@ function sendEmail(){
 
   var iss  = currentData.issue || {};
   var subject = "The Signal Feed \u2014 " + (iss.week || iss.num || "Weekly Issue");
-  var html = document.getElementById("newsletter").innerHTML;
+  var emailHTML = buildEmailHTML(currentData);
 
   var sends = recipients.map(function(r){
     return emailjs.send(EJ_SVC, EJ_TPL, {
       to_name:   r.name,
       to_email:  r.email,
       subject:   subject,
-      html_body: html
+      html_body: emailHTML
     });
   });
 
